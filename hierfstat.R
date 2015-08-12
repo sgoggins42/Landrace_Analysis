@@ -32,5 +32,8 @@ for(i in 1:ncol(Land_6152_SNPs_AB)){
 
 View(Land_6152_SNPs_AB)
 
-basic.stats(Land_6152_SNPs_AB,Diploid=TRUE) #haploid?
+col1 <- Land_6152_SNPs_AB[1,]
+basic.stats(col1, diploid=FALSE) #Error in 1 - sp2 - sHo/2/n : non-conformable arrays or Error in n/(n - 1) * (1 - sp2) : non-conformable arrays
+
+basic.stats(Land_6152_SNPs_AB[,1],diploid=FALSE) #haploid?
 ?basic.stats
