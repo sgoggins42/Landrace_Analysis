@@ -36,4 +36,3 @@ for(i in Land_genotypes$X){
 }
 
 EvWvO <- basic.stats(Land_genotypes[,-1],diploid=FALSE)
-
