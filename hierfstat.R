@@ -70,6 +70,8 @@ for(i in (1:ncol(geno.df))){
     chr1_geno <- chr1_geno[-1,]
     chr1_geno$chr <- 1
     chr1_geno <-   chr1_geno[,c(ncol(chr1_geno),1:(ncol(chr1_geno)-1))] 
+    chr1_geno$ID <- row.names(chr1_geno)
+    chr1_geno <-   chr1_geno[,c(ncol(chr1_geno),1:(ncol(chr1_geno)-1))] 
     View(chr1_geno[1:5,1:5])
     write.csv(chr1_geno,file="chr1_geno")
     
@@ -80,6 +82,8 @@ for(i in (1:ncol(geno.df))){
     chr2_geno <- chr2_geno[-1,]
     chr2_geno$chr <- 2
     chr2_geno <-   chr2_geno[,c(ncol(chr2_geno),2:(ncol(chr2_geno)-1))] 
+    chr2_geno$ID <- row.names(chr2_geno)
+    chr2_geno <-   chr2_geno[,c(ncol(chr2_geno),1:(ncol(chr2_geno)-1))] 
     View(chr2_geno[1:5,1:5])
     write.csv(chr2_geno,file="chr2_geno")
     
@@ -87,9 +91,11 @@ for(i in (1:ncol(geno.df))){
     n3 <- chr3_geno$SNP.ID
     chr3_geno <- as.data.frame(t(chr3_geno[,-1]))
     colnames(chr3_geno) <- n3
-    chr3_geno <- chr2_geno[-1,]
+    chr3_geno <- chr3_geno[-1,]
     chr3_geno$chr <- 3
     chr3_geno <-   chr3_geno[,c(ncol(chr3_geno),2:(ncol(chr3_geno)-1))] 
+    chr3_geno$ID <- row.names(chr3_geno)
+    chr3_geno <-   chr3_geno[,c(ncol(chr3_geno),1:(ncol(chr3_geno)-1))] 
     View(chr3_geno[1:5,1:5])
     write.csv(chr3_geno,file="chr3_geno")
     
@@ -100,6 +106,8 @@ for(i in (1:ncol(geno.df))){
     chr4_geno <- chr4_geno[-1,]
     chr4_geno$chr <- 4
     chr4_geno <-   chr4_geno[,c(ncol(chr4_geno),2:(ncol(chr4_geno)-1))] 
+    chr4_geno$ID <- row.names(chr4_geno)
+    chr4_geno <-   chr4_geno[,c(ncol(chr4_geno),1:(ncol(chr4_geno)-1))] 
     View(chr4_geno[1:5,1:5])
     write.csv(chr4_geno,file="chr4_geno")
     
@@ -110,6 +118,8 @@ for(i in (1:ncol(geno.df))){
     chr5_geno <- chr5_geno[-1,]
     chr5_geno$chr <- 5
     chr5_geno <-   chr5_geno[,c(ncol(chr5_geno),2:(ncol(chr5_geno)-1))] 
+    chr5_geno$ID <- row.names(chr5_geno)
+    chr5_geno <-   chr5_geno[,c(ncol(chr5_geno),1:(ncol(chr5_geno)-1))] 
     View(chr5_geno[1:5,1:5])
     write.csv(chr5_geno,file="chr5_geno")
     
@@ -120,6 +130,8 @@ for(i in (1:ncol(geno.df))){
     chr6_geno <- chr6_geno[-1,]
     chr6_geno$chr <- 6
     chr6_geno <-   chr6_geno[,c(ncol(chr6_geno),2:(ncol(chr6_geno)-1))] 
+    chr6_geno$ID <- row.names(chr6_geno)
+    chr6_geno <-   chr6_geno[,c(ncol(chr6_geno),1:(ncol(chr6_geno)-1))] 
     View(chr6_geno[1:5,1:5])
     write.csv(chr6_geno,file="chr6_geno")
     
@@ -130,13 +142,17 @@ for(i in (1:ncol(geno.df))){
     chr7_geno <- chr7_geno[-1,]
     chr7_geno$chr <- 7
     chr7_geno <-   chr7_geno[,c(ncol(chr7_geno),2:(ncol(chr7_geno)-1))] 
+    chr7_geno$ID <- row.names(chr7_geno)
+    chr7_geno <-   chr7_geno[,c(ncol(chr7_geno),1:(ncol(chr7_geno)-1))] 
     View(chr7_geno[1:5,1:5])
     write.csv(chr7_geno,file="chr7_geno")
 
-bySNPs.df <- list.files(pattern="chr[1-7]_geno")
-bySNPs_table <- lapply(bySNPs.df,read.csv,header=TRUE)
-combinedSNPs.df <- do.call(rbind, bySNPs_table)
-View(combinedSNPs.df[450:460,1:5])
+library(plyr)
+combindSNPS.df <- rbind.fill(chr1_geno,chr2_geno,chr3_geno,chr4_geno,chr5_geno,chr6_geno,chr7_geno)
+combindSNPS.df$chr <- ifelse(test = combindSNPS.df$chr == "2", yes = "2", no = "1")
+View(combindSNPS.df)
 
+basic.stats(combindSNPS.df,diploid = FALSE) #FST: -0.0001
 
-#genoSNPs.df$Chromosome <- ifelse(test = genoSNPs.df$Chromosome == "2H", yes="2", no="1")
+catch <- cbind(chr1_geno$ID,c(chr1_geno,chr2_geno,chr3_geno,chr4_geno,chr5_geno,chr6_geno,chr7_geno))
+
