@@ -38,9 +38,27 @@ for(i in (1:ncol(geno.df))){
     #basic.stats
   EW_basicstats <- basic.stats(locgenoEW.df[, -1], diploid = FALSE)
   EW_basicstats #FST = 0.0802
-
+  #EW_ppfst <- pp.fst(dat = locgenoEW.df, diploid=FALSE)
+  
+#### Making a column for 2 v 6 row barley
+  Rowtype.df <- barley_compare_merged[,c(2,11)]
+  head(Rowtype.df)  
+  Rowtype2.df <- subset(Rowtype.df, SPIKEROW == 2, select = c(Accession.ID, SPIKEROW))
+  Rowtype6.df <- subset(Rowtype.df, SPIKEROW == 6, select = c(Accession.ID, SPIKEROW))
+  RowtypeC.df <- rbind(Rowtype2.df,Rowtype6.df)
+  View(RowtypeC.df)
+  locRowtype.df <- merge(x = RowtypeC.df,y = geno.df, by.x = "Accession.ID", by.y = "X")
+  head(locRowtype.df[,1:3])  
+  locRowtype.df$Accession.ID <- 1:nrow(locRowtype.df)
+  # 2:2; 6:1; other:NA
+  locRowtype.df$SPIKEROW <- ifelse(test = locRowtype.df$SPIKEROW == "2", yes="2", no ="1" )
+  View(locRowtype.df)
+  row_basicstats <- basic.stats(locRowtype.df[, -1], diploid = FALSE)
+  row_basicstats #FST: 0.0766
+  row_pp.fst <- pp.fst(dat=locRowtype.df,diploid = FALSE)
+  
 #### Making a column for spring vs winter
-  Habit.df <- barley_merged[ ,c(2,10)]
+  Habit.df <- mergedAccessions[ ,c(1,7)]
   head(Habit.df)
   locHabit.df <- merge(x = Habit.df, y=geno.df, by.x = "Accession.ID", by.y = "X")
   head(locHabit.df[,1:3])
@@ -50,8 +68,7 @@ for(i in (1:ncol(geno.df))){
   
   SpWi_basicstats <- basic.stats(locHabit.df[, -1], diploid = FALSE)
   SpWi_basicstats #FST = 0.0225
-  
-  
+ 
 ######### Makes a column for SNPs by chromosome
   #tgeno = t(geno.df) without header - exel  
   #genmap <- GeneticMap_iSelect_9k
