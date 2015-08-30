@@ -1,19 +1,12 @@
+#!: Shawn Goggins - fst
+
 install.packages("hierfstat") #depends on 'gtools' and 'ade4'
 library("hierfstat")
-
-#import genotype dataset "Land_6152_SNPs_AB"
-
-#basic.stats(data,diploid=TRUE,digits=4) #Fst
-#AA: 1
-#BB: 2
-#AB: NA
 
 #import dataset
 loc.df <- `803_KML`
 geno.df <- Land_6152_SNPs_AB
 
-#check data type
-class(geno.df[3,4]) #needs to be character
 options(stringsAsFactors = FALSE)
 
 #replace character alleles, with integer genotypes
@@ -29,12 +22,9 @@ for(i in (1:ncol(geno.df))){
   loc.df$side <- ifelse(test = loc.df$Longitude <48, yes = "1", no = "2")
     # making a temp df to store the names and the side column
   locside.df <- loc.df[,c(1,6)]
-  View(locside.df)
     # merging onto the genotypes 
   locgenoEW.df <- merge(x = locside.df, y=geno.df, by.x = "Accession.ID", by.y = "X")
-  head(locgenoEW.df[,1:3])
   locgenoEW.df$Accession.ID <- 1:nrow(locgenoEW.df)
-  head(locgenoEW.df[,1:3])
     #basic.stats
   EW_basicstats <- basic.stats(locgenoEW.df[, -1], diploid = FALSE)
   EW_basicstats #FST = 0.0802
@@ -42,26 +32,20 @@ for(i in (1:ncol(geno.df))){
   
 #### Making a column for 2 v 6 row barley
   Rowtype.df <- barley_compare_merged[,c(2,11)]
-  head(Rowtype.df)  
   Rowtype2.df <- subset(Rowtype.df, SPIKEROW == 2, select = c(Accession.ID, SPIKEROW))
   Rowtype6.df <- subset(Rowtype.df, SPIKEROW == 6, select = c(Accession.ID, SPIKEROW))
   RowtypeC.df <- rbind(Rowtype2.df,Rowtype6.df)
-  View(RowtypeC.df)
   locRowtype.df <- merge(x = RowtypeC.df,y = geno.df, by.x = "Accession.ID", by.y = "X")
-  head(locRowtype.df[,1:3])  
   locRowtype.df$Accession.ID <- 1:nrow(locRowtype.df)
   # 2:2; 6:1; other:NA
   locRowtype.df$SPIKEROW <- ifelse(test = locRowtype.df$SPIKEROW == "2", yes="2", no ="1" )
-  View(locRowtype.df)
   row_basicstats <- basic.stats(locRowtype.df[, -1], diploid = FALSE)
   row_basicstats #FST: 0.0766
-  row_pp.fst <- pp.fst(dat=locRowtype.df,diploid = FALSE)
+  #row_pp.fst <- pp.fst(dat=locRowtype.df,diploid = FALSE)
   
 #### Making a column for spring vs winter
   Habit.df <- mergedAccessions[ ,c(1,7)]
-  head(Habit.df)
   locHabit.df <- merge(x = Habit.df, y=geno.df, by.x = "Accession.ID", by.y = "X")
-  head(locHabit.df[,1:3])
   locHabit.df$Accession.ID <- 1:nrow(locHabit.df)
     # Winter:1, Spring:2
   locHabit.df$HABIT <- ifelse(test = locHabit.df$HABIT == "W", yes="1", no="2")
@@ -70,10 +54,6 @@ for(i in (1:ncol(geno.df))){
   SpWi_basicstats #FST = 0.0225
  
 ######### Makes a column for SNPs by chromosome
-  #tgeno = t(geno.df) without header - exel  
-  #genmap <- GeneticMap_iSelect_9k
-  #chr2<-subset(genmap,genmap$Chro == '2H')
-  #chr2_SNPs <- chr2[,1]
   AllSNPs <- GeneticMap_iSelect_9k[,c("SNP","Chromosome")]
   genoSNPs.df <- merge(x = tgeno, y=AllSNPs, by.x = "SNP.ID", by.y = "SNP") #chromosome at end
   
@@ -165,11 +145,3 @@ for(i in (1:ncol(geno.df))){
     write.csv(chr7_geno,file="chr7_geno")
 
 library(plyr)
-combindSNPS.df <- rbind.fill(chr1_geno,chr2_geno,chr3_geno,chr4_geno,chr5_geno,chr6_geno,chr7_geno)
-combindSNPS.df$chr <- ifelse(test = combindSNPS.df$chr == "2", yes = "2", no = "1")
-View(combindSNPS.df)
-
-basic.stats(combindSNPS.df,diploid = FALSE) #FST: -0.0001
-
-catch <- cbind(chr1_geno$ID,c(chr1_geno,chr2_geno,chr3_geno,chr4_geno,chr5_geno,chr6_geno,chr7_geno))
-
