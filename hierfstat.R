@@ -4,7 +4,7 @@
 library("hierfstat")
 
 #import dataset
-loc.df <- `803_landraces_KML`
+loc.df <- `803_KML`
 geno.df <- Land_6152_SNPs_AB
 
 options(stringsAsFactors = FALSE)
@@ -17,63 +17,53 @@ for(i in (1:ncol(geno.df))){
     geno.df[,i]<-replace(geno.df[,i],geno.df[,i]=="BA",NA)
 }
 
-#### Ana's populations
-AllSNPs <- GeneticMap_iSelect_9k[,c("SNP","Chromosome")]
-genoSNPs.df <- merge(x = tgeno, y=AllSNPs, by.x = "SNP.ID", by.y = "SNP") #chromosome at end
-
-for(i in (1:ncol(Private_allele_ALLpops))){
-  Private_allele_ALLpops[,i]<-replace(Private_allele_ALLpops[,i],Private_allele_ALLpops[,i]=="A",1)
-  Private_allele_ALLpops[,i]<-replace(Private_allele_ALLpops[,i],Private_allele_ALLpops[,i]=="B",2)
-}
-
-#N_Mesopotamia private allele 
-N_Mesopotamia.df <- subset(Private_allele_ALLpops, Population == "N_Mesopotamia", select = c("SNP", "Population"))
-N_MesoSNPS.df <- merge(x=genoSNPs.df,y=N_Mesopotamia.df,by.x="SNP.ID",by.y="SNP")
-s1 <- N_MesoSNPS.df$SNP.ID
-N_MesoSNPS.df <- as.data.frame(t(N_MesoSNPS.df[,-1]))
-colnames(N_MesoSNPS.df) <- s1
-N_MesoSNPS.df <- N_MesoSNPS.df[1:803,]
-N_MesoSNPS.df$Allele <- 1
-N_MesoSNPS.df <- N_MesoSNPS.df[,c(ncol(N_MesoSNPS.df),1:(ncol(N_MesoSNPS.df)-1))]
-#1
-N_MesoSNPS.df$Allele <- 1:nrow(N_MesoSNPS.df)
-#NM_basicstats <- basic.stats(N_MesoSNPS.df,diploid=FALSE)
-#NM_basicstats
-#write.csv(N_MesoSNPS.df,file = "N_MesoSNPS.df.csv")
-#2
-  #X12_30592 private allele 
-    geno.df$Allele <- ifelse(test = N_MesoSNPS.df$X12_30592 == "2", yes = "1", no = "2")
-    locNM.df <- geno.df[,c(1,ncol(geno.df),2:(ncol(geno.df)-1))]
-    locNM.df$X <- 1:nrow(locNM.df)
-    NMX12_30592_basicstats <- basic.stats(locNM.df[, -1], diploid = FALSE)
-    NMX12_30592_basicstats #FST: 0.0388
-    write.csv(NMX12_30592_basicstats$perloc, file = "NMX12_30592_perloc.csv")
-
-S_Levant.df <- subset(Private_allele_ALLpops, Population == "S_Levant", select = c("SNP", "Population"))
-S_LevantSNPS.df <- merge(x=genoSNPs.df,y=S_Levant.df,by.x="SNP.ID",by.y="SNP")
-
-S_Desert.df <- subset(Private_allele_ALLpops, Population == "S_Desert", select = c("SNP", "Population"))
-S_DesertSNPS.df <- merge(x=genoSNPs.df,y=S_Desert.df,by.x="SNP.ID",by.y="SNP")
-
-N_Levant.df <- subset(Private_allele_ALLpops, Population == "N_Levant", select = c("SNP", "Population"))
-N_LevantSNPS.df <- merge(x=genoSNPs.df,y=N_Levant.df,by.x="SNP.ID",by.y="SNP")
-
-C_Asia.df <- subset(Private_allele_ALLpops, Population == "C_Asia", select = c("SNP", "Population"))
-C_AsiaSNPS.df <- merge(x=genoSNPs.df,y=C_Asia.df,by.x="SNP.ID",by.y="SNP")
-
-
 #### making a column of E or W for location
     # West is 1, East is 2
   loc.df$side <- ifelse(test = loc.df$Longitude <48, yes = "1", no = "2")
     # making a temp df to store the names and the side column
   locside.df <- loc.df[,c(1,6)]
-    # merging onto the genotypes 
+  View(locside.df)  
+     # merging onto the genotypes 
   locgenoEW.df <- merge(x = locside.df, y=geno.df, by.x = "Accession.ID", by.y = "X")
   locgenoEW.df$Accession.ID <- 1:nrow(locgenoEW.df)
-    #basic.stats
+    View(locgenoEW.df)  
+     #basic.stats
   EW_basicstats <- basic.stats(locgenoEW.df[, -1], diploid = FALSE)
-  EW_basicstats #FST = 0.0802
-  #EW_ppfst <- pp.fst(dat = locgenoEW.df, diploid=FALSE)
+  write.csv(EW_basicstats$perloc,file="EW_perloc.csv")
+      #FIS=(HS-HI)/HS & FST=(HT-HS)/HT
+      #DST=HT-HS
+      #merge FST into by chromosome
+  EW_perloc <- EW_perloc[,c(1,3:9,11)]
+  SNP_by_chro <- GeneticMap_iSelect_9k[,c(1,4,7)]
+  
+  par(mfrow=c(2,4))
+  SNP_FST.df <- merge(x = EW_perloc, y = SNP_by_chro, by.x = "X", by.y = "SNP")
+  
+  SNP1_FST.df <- subset(SNP_FST.df, Chromosome == 1, select = c(X,Fst,cm))
+  with(SNP1_FST.df,plot(x=cm,y=Fst))  
+  
+  SNP2_FST.df <- subset(SNP_FST.df, Chromosome == 2, select = c(X,Fst,cm))
+  with(SNP2_FST.df,plot(x=cm,y=Fst))  
+  not2 <- subset(SNP_FST.df, Chromosome != 2, select = c(X,Fst,cm))
+  with(SNP_FST.df, plot(x = Fst,y = cm, cex = .75,
+                                col = ifelse(Chromosome == "2", "red","blue")))
+    
+  SNP3_FST.df <- subset(SNP_FST.df, Chromosome == 3, select = c(X,Fst,cm))
+  with(SNP3_FST.df,plot(x=cm,y=Fst)) 
+  SNP4_FST.df <- subset(SNP_FST.df, Chromosome == 4, select = c(X,Fst,cm))
+  with(SNP4_FST.df,plot(x=cm,y=Fst)) 
+  SNP5_FST.df <- subset(SNP_FST.df, Chromosome == 5, select = c(X,Fst,cm))
+  with(SNP5_FST.df,plot(x=cm,y=Fst)) 
+  with(SNP_FST.df, plot(x = Fst,y = cm, cex = .75,
+                        col = ifelse(Chromosome == "5", "red","blue")))
+  
+  
+  SNP6_FST.df <- subset(SNP_FST.df, Chromosome == 6, select = c(X,Fst,cm))
+  with(SNP6_FST.df,plot(x=cm,y=Fst)) 
+  SNP7_FST.df <- subset(SNP_FST.df, Chromosome == 7, select = c(X,Fst,cm))
+  with(SNP7_FST.df,plot(x=cm,y=Fst)) 
+
+ 
   
 #### Making a column for 2 v 6 row barley
   Rowtype.df <- barley_compare_merged[,c(2,11)]
@@ -101,3 +91,51 @@ C_AsiaSNPS.df <- merge(x=genoSNPs.df,y=C_Asia.df,by.x="SNP.ID",by.y="SNP")
   
 
  
+  
+  
+  
+  
+  
+  #### Ana's populations
+  AllSNPs <- GeneticMap_iSelect_9k[,c("SNP","Chromosome")]
+  genoSNPs.df <- merge(x = tgeno, y=AllSNPs, by.x = "SNP.ID", by.y = "SNP") #chromosome at end
+  
+  for(i in (1:ncol(Private_allele_ALLpops))){
+    Private_allele_ALLpops[,i]<-replace(Private_allele_ALLpops[,i],Private_allele_ALLpops[,i]=="A",1)
+    Private_allele_ALLpops[,i]<-replace(Private_allele_ALLpops[,i],Private_allele_ALLpops[,i]=="B",2)
+  }
+  
+  #N_Mesopotamia private allele 
+  N_Mesopotamia.df <- subset(Private_allele_ALLpops, Population == "N_Mesopotamia", select = c("SNP", "Population"))
+  N_MesoSNPS.df <- merge(x=genoSNPs.df,y=N_Mesopotamia.df,by.x="SNP.ID",by.y="SNP")
+  s1 <- N_MesoSNPS.df$SNP.ID
+  N_MesoSNPS.df <- as.data.frame(t(N_MesoSNPS.df[,-1]))
+  colnames(N_MesoSNPS.df) <- s1
+  N_MesoSNPS.df <- N_MesoSNPS.df[1:803,]
+  N_MesoSNPS.df$Allele <- 1
+  N_MesoSNPS.df <- N_MesoSNPS.df[,c(ncol(N_MesoSNPS.df),1:(ncol(N_MesoSNPS.df)-1))]
+  #1
+  N_MesoSNPS.df$Allele <- 1:nrow(N_MesoSNPS.df)
+  #NM_basicstats <- basic.stats(N_MesoSNPS.df,diploid=FALSE)
+  #NM_basicstats
+  #write.csv(N_MesoSNPS.df,file = "N_MesoSNPS.df.csv")
+  #2
+  #X12_30592 private allele 
+  geno.df$Allele <- ifelse(test = N_MesoSNPS.df$X12_30592 == "2", yes = "1", no = "2")
+  locNM.df <- geno.df[,c(1,ncol(geno.df),2:(ncol(geno.df)-1))]
+  locNM.df$X <- 1:nrow(locNM.df)
+  NMX12_30592_basicstats <- basic.stats(locNM.df[, -1], diploid = FALSE)
+  NMX12_30592_basicstats #FST: 0.0388
+  write.csv(NMX12_30592_basicstats$perloc, file = "NMX12_30592_perloc.csv")
+  
+  S_Levant.df <- subset(Private_allele_ALLpops, Population == "S_Levant", select = c("SNP", "Population"))
+  S_LevantSNPS.df <- merge(x=genoSNPs.df,y=S_Levant.df,by.x="SNP.ID",by.y="SNP")
+  
+  S_Desert.df <- subset(Private_allele_ALLpops, Population == "S_Desert", select = c("SNP", "Population"))
+  S_DesertSNPS.df <- merge(x=genoSNPs.df,y=S_Desert.df,by.x="SNP.ID",by.y="SNP")
+  
+  N_Levant.df <- subset(Private_allele_ALLpops, Population == "N_Levant", select = c("SNP", "Population"))
+  N_LevantSNPS.df <- merge(x=genoSNPs.df,y=N_Levant.df,by.x="SNP.ID",by.y="SNP")
+  
+  C_Asia.df <- subset(Private_allele_ALLpops, Population == "C_Asia", select = c("SNP", "Population"))
+  C_AsiaSNPS.df <- merge(x=genoSNPs.df,y=C_Asia.df,by.x="SNP.ID",by.y="SNP")
