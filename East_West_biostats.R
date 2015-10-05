@@ -1,4 +1,4 @@
-source("hierfstat.R")
+# source("hierfstat.R")
 
 #Import East and West biostatistics
 EW_basicstats <- read.csv("~/Desktop/EW_basicstats.csv")
