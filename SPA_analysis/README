@@ -1,0 +1,7 @@
+Documents LICENSE, spa, and spa_manual are properties of: Yang WY, Novembre J, Eskin E, Halperin E.
+	spa: program download
+
+SPA.R takes allelic data and formats it for --gfile format in the spa analysis.
+--gfile format replaces allelic data with 0-2 for the number of minor alleles. Barley is treated as a haploid, with a 0 for no minor alleles, and 1 for one minor allele.
+
+Spa_input.df is the output of SPA.R.
