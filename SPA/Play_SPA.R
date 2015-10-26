@@ -44,3 +44,23 @@ Zhou_outlierSPA$Z_cm <- 72.99
 Zhou_outlierSPA <- Zhou_outlierSPA[, c(1:6, 12, 7:11)]
 
 
+loc.df <- `803_landraces_KML`
+geno.df$side <- 0
+geno.spa <- geno.df
+geno.spa$side <- ifelse(test = geno.spa$X11_10685 == 0, yes = "0", no = "2")
+geno.spa <- geno.spa[,c("X","side")]
+loc.spa <- merge(x = loc.df, y = geno.spa, by.x = "Accession.ID", by.y = "X")
+
+library("maps")
+data("wrld_simpl")
+plot(wrld_simpl,xlim=c(-30,140),ylim=c(-8,64),col="lemonchiffon2",main="Distribution of Outlier Chromosome 2 SNP")
+box()
+
+with(loc.spa, points(x = Longitude,y = Latitude, cex = .75,
+                      col = ifelse(side == "0", "red","blue")))
+abline(v=48) #Zagaros 
+
+legend("bottomleft", bg = "transparent",
+       c("Zagros Mountains","Minor Allele", "Major Allele"),
+       col=c("black","blue","red"), lwd=1, lty=c(1,NA,NA),
+       pch = c(NA,21,21),cex = 0.75)
