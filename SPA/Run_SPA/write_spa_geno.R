@@ -20,13 +20,20 @@ for(i in (1:ncol(geno.df))){
   }
 }
 
-View(geno.df)
 spa_geno.df <- geno.df
-Sample_spa_geno.df <- spa_geno.df$X
-SNP_spa_geno.df <- colnames(spa_geno.df)
+
+#save populations names
+Population_names <- spa_geno.df$X
+
+#remove population names from dataset
 spa_geno.df <- spa_geno.df[,-1]
 
+#remove SNPs that arent biallelic
 spa_geno.df <- spa_geno.df[, colSums(spa_geno.df == 0,na.rm=T) > 0  & colSums(spa_geno.df == 2,na.rm=T) > 0  ] 
 
-write.table(spa_geno.df, sep = " ", file = "spa_geno_2.df", quote = FALSE, row.names = FALSE, col.names = FALSE)
+#save SNP names
+SNP_names <- colnames(spa_geno.df)
+SNP_names <- as.data.frame(SNP_names)
+
+write.table(spa_geno.df, sep = " ", file = "spa_geno_original", quote = FALSE, row.names = FALSE, col.names = FALSE)
 

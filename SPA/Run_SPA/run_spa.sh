@@ -1,4 +1,4 @@
-#bin/bash
+#!/bin/bash
 
 ##written by Shawn Goggins
 ## 10/09/15
@@ -7,5 +7,5 @@
 
 # program available at: http://genetics.cs.ucla.edu/spa
 
-./spa --gfile spa_geno.df --location-output spa_geno.df --model-output spa_geno.model
+./spa --gfile spa_geno_original --location-output spa_loc --model-output spa_geno.model
 
