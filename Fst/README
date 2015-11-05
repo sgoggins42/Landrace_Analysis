@@ -1,0 +1,13 @@
+1. hierfstat.R
+Script to partition landraces by East and West of the Zagros Mountains
+ and to run basic.stats over them.
+
+2. East_West_biostats.R
+Script to identify Fst outliers and to graph the landraces by these variants
+
+3. Fst_distribution.pdf
+Image of all Fst values for SNPs across barley landraces
+
+4. Linkage_CHR2_Distribution.pdf
+Map of SNP X11_10317, in complete linkage with 5 other SNPs in the 'inversion'
+region on chromosome 2.
