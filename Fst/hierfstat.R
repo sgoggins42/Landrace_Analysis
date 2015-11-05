@@ -33,7 +33,7 @@ write.csv(geno.df, file = "geno.df")
   write.csv(EW_basicstats$perloc,file="EW_basicstats.csv")
      #graph outlier SNPs
   
-  #### Making a column for 2 v 6 row barley
+#### Making a column for 2 v 6 row barley
   Rowtype.df <- barley_compare_merged[,c(2,11)]
   Rowtype2.df <- subset(Rowtype.df, SPIKEROW == 2, select = c(Accession.ID, SPIKEROW))
   Rowtype6.df <- subset(Rowtype.df, SPIKEROW == 6, select = c(Accession.ID, SPIKEROW))
@@ -44,8 +44,7 @@ write.csv(geno.df, file = "geno.df")
   locRowtype.df$SPIKEROW <- ifelse(test = locRowtype.df$SPIKEROW == "2", yes="2", no ="1" )
   row_basicstats <- basic.stats(locRowtype.df[, -1], diploid = FALSE)
   row_basicstats #FST: 0.0766
-  #row_pp.fst <- pp.fst(dat=locRowtype.df,diploid = FALSE)
-  
+
 #### Making a column for spring vs winter
   SpringLR <- subset(mergedAccessions, HABIT == "S", select = c(Accession.ID,HABIT))
   WinterLR <- subset(mergedAccessions, HABIT == "W", select = c(Accession.ID,HABIT))
