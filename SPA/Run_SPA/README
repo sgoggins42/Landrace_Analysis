@@ -1,0 +1,20 @@
+1. write_spa_geno.R
+Script to manipulate genotype data for SPA analysis
+
+2. spa_geno_original
+Dataframe made from above script
+
+3.run_spa.sh
+Scipt to run SPA from only genotype data
+
+4. SPA_outliers.R
+Script to identify and visualize outliers by SPA score
+
+5. spa_model
+"model" format output from spa analysis, with SPA score in last column
+
+6. spa_loc
+"loc" format output form spa analysis, with inferred sample locations
+
+7. SPA_CHR_Distribution.pdf
+Visualization of 95% SPA scores
