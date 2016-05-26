@@ -12,14 +12,61 @@ geno.dat <- read.delim("~/Landrace_Analysis/Worked_Datasets/Land_6152_SNPs_AB.tx
 GeneticMap_iSelect_9k <- read.delim("~/Landrace_Analysis/Worked_Datasets/GeneticMap_iSelect_9k.txt")
 
 #replace character alleles, with integer genotypes
-for(i in (1:ncol(geno.dat))){
-    geno.dat[,i]<-replace(geno.dat[,i],geno.dat[,i]=="AA",1)
-    geno.dat[,i]<-replace(geno.dat[,i],geno.dat[,i]=="BB",2)
-    geno.dat[,i]<-replace(geno.dat[,i],geno.dat[,i]=="AB",NA)
-    geno.dat[,i]<-replace(geno.dat[,i],geno.dat[,i]=="BA",NA)
+to.Assignment <- function(dat){
+  dat[dat == "AA"] <- as.numeric(11)
+  dat[dat == "BB"] <- as.numeric(22)
+  dat[dat == "AB"] <- as.numeric(12)
+  dat[dat == "BA"] <- as.numeric(12)
+return(dat)
 }
 
-#write.csv(geno.df, file = "geno.df")
+# Run function:
+geno.dat<- to.Assignment(dat = geno.dat)
+
+# Make values numeric type, and add back in Sample names and rownames
+Samples <- geno.dat[,1]
+geno.dat <- as.data.frame(apply(geno.dat[,-1], 2, as.numeric))
+rownames(geno.dat) <- Samples
+
+# Remove mon-allelic SNPs
+geno.dat <- geno.dat[ , colSums(geno.dat, na.rm = TRUE) > (11 * length(geno.dat[,1])) & colSums(geno.dat, na.rm = TRUE) < (22 * length(geno.dat[,1]))]
+
+# Remove SNPs with > 10% NA's
+# Names of those columns that are good
+Data.NA <- names(which(apply(geno.dat, 2, function(x) sum(length(which(is.na(x))))) <= (0.1 * length(geno.dat[,1]))))
+# Subset only these SNPs
+geno.dat <- geno.dat[ , Data.NA]
+
+# Omit samples that have > 10% heterozygosity
+Data.hets <- names(which(apply(geno.dat, 1, function(x) sum(length(which(x == 12)))) <= (0.01 * length(geno.dat[,1]))))
+# subset only these Samples
+geno.dat <- geno.dat[Data.hets, ]
+
+# new dimensions for analysis:
+#   dim(geno.dat)
+
+# pairwise LD:
+library("genetics")
+
+# Function to create allele matrix
+  to.ACTG <- function(dat){
+    dat[dat == 11] <- as.character("A/A")
+    dat[dat == 22] <- as.character("T/T")
+    dat[dat == 12] <- as.character("C/G")
+    return(dat)
+  }
+# Run function
+  LD.matrix <- apply(X = geno.dat, 2, FUN = to.ACTG)
+# Make sure values are characters
+  LD.matrix <- apply(X = LD.matrix, 2, as.character)
+# make sure this is a data frame and not a list
+  LD.matrix <- as.data.frame(LD.matrix)
+# Get rownames back
+  rownames(LD.matrix) <- rownames(geno.dat)
+# Run LD over the data:
+  LD.matrix.2 <- makeGenotypes(data = LD.matrix)
+  total.LD.df <- LD(g1 = LD.matrix.2)
+  head(total.LD.df)
 
 #### E or W 
     # West is 1, East is 2
