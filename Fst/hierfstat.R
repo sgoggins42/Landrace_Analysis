@@ -1,97 +1,67 @@
-#install.packages("hierfstat") #depends on 'gtools' and 'ade4'
-library("hierfstat")
-
 # No factors please
 options(stringsAsFactors = FALSE)
 
-# import datasets
-#   Location data
-  loc.dat <- read.csv("~/Landrace_Analysis/Worked_Datasets/803_landraces_KML.csv")
+# Import dataset
 #   Genotype data
-  geno.dat <- read.delim("~/Landrace_Analysis/Worked_Datasets/Land_6152_SNPs_AB.txt")
-#   Mapping data
-  GeneticMap_iSelect_9k <- read.delim("~/Landrace_Analysis/Worked_Datasets/GeneticMap_iSelect_9k.txt")
-
-# Function to replace allles with integery genotypes
-# AA = 11, and BB = 22, AB/BA = 12
-  to.Assignment <- function(dat){
-    dat[dat == "AA"] <- as.numeric(11)
-    dat[dat == "BB"] <- as.numeric(22)
-    dat[dat == "AB"] <- as.numeric(12)
-    dat[dat == "BA"] <- as.numeric(12)
-  return(dat)
+    geno.dat <- read.csv("~/Landrace_Analysis/Worked_Datasets/Fumi.Cleaned.Genotypes.csv")
+#   Save Sample names and SNP names:
+#   Samples:
+    Samples.dat <- as.data.frame(geno.dat$taxa)
+#   SNPs
+    SNPs.dat <- as.data.frame(colnames(geno.dat))    
+    SNPs.dat <- as.data.frame(SNPs.dat[-1,])
+#   Genotype matrix only:
+    geno.dat <- geno.dat[,-1]
+# Turn genotype calls into minor allele counts:
+#   Function to replace genotypes with A or B
+    to.Assignment <- function(dat){
+      dat[dat == 0] <- "A"
+      dat[dat == 1] <- NA
+      dat[dat == 2] <- "B"
+      return(dat)
+    }
+#   Run function:
+    geno.dat <- to.Assignment(dat = geno.dat)   
+# Find columns where A is major allele:
+  major <- names(which(apply(geno.dat, 2, function(x) length(which(x == "A")) / nrow(geno.dat)) >= 0.5))
+# Find columns where A is minor allele:
+  minor <- names(which(apply(geno.dat, 2, function(x) length(which(x == "A")) / nrow(geno.dat)) < 0.5))
+# Subset these datasets
+  major.dat <- geno.dat[,major]
+  minor.dat <- geno.dat[,minor]
+# Function from A major to 0, B minor to 1:
+  to.A.major <- function(dat){
+    dat[dat == "A"] <- as.numeric(0)
+    dat[dat == "B"] <- as.numeric(1)
+    return(dat)
   }
-# Run function:
-  geno.dat<- to.Assignment(dat = geno.dat)
+#  Run function
+  major.dat <- to.A.major(dat = major.dat)     
+# Function from A minor to 1, B major to 0:
+  to.A.minor <- function(dat){
+    dat[dat == "A"] <- as.numeric(1)
+    dat[dat == "B"] <- as.numeric(0)
+    return(dat)
+  }
+#  Run function
+  minor.dat <- to.A.minor(dat = minor.dat)    
+# Combine dataframes into one matrix of major allele counts:
+  geno.dat <- as.data.frame(cbind(major.dat, minor.dat))
+# Make data numeric:
+  geno.dat <- as.data.frame(apply(geno.dat, 2, as.numeric))
+  
+# Plot the minor allele frequency:
+    h <- hist(colSums(geno.dat, na.rm = TRUE)/nrow(geno.dat),
+              breaks = 40)
+    h$density <- h$counts/sum(h$counts)    
+    plot(h, freq = FALSE,
+         main = "MAF",
+         xlab = "MAF",
+         ylab = "Density")    
+### What is going on here?
 
-# Make values numeric type, and add back in Sample names and rownames
-#   Samples are the accession names
-  Samples <- geno.dat[,1]
-#   Samples are removed when making data numeric
-  geno.dat <- as.data.frame(apply(geno.dat[,-1], 2, as.numeric))
-#   Add Samples back in
-    rownames(geno.dat) <- Samples
-# Filtering:
-# Remove mon-allelic SNPs
-#   The column sum should be greater than if it only had 11 and less than if it only had 22
-  geno.dat <- geno.dat[ , colSums(geno.dat, na.rm = TRUE) > (11 * length(geno.dat[,1])) & colSums(geno.dat, na.rm = TRUE) < (22 * length(geno.dat[,1]))]
-# Remove SNPs with > 10% NA's
-# Names of those columns that have 90% or greater data
-  Data.NA <- names(which(apply(geno.dat, 2, function(x) sum(length(which(is.na(x))))) <= (0.1 * length(geno.dat[,1]))))
-# Subset only these SNPs
-  geno.dat <- geno.dat[ , Data.NA]
-# Omit samples that have > 10% heterozygosity
-  Data.hets <- names(which(apply(geno.dat, 1, function(x) sum(length(which(x == 12)))) <= (0.01 * length(geno.dat[,1]))))
-# subset only these Samples
-  geno.dat <- geno.dat[Data.hets, ]
 
 ####
-# Trial:
-  # scratch <- geno.dat
-# Bring back the AA's and BB's
-  # for(i in (1:ncol(scratch))){
-  #   if((length(which(scratch[,i] == '11'))) > (length(which(scratch[,i] == '22')))){
-  #   scratch[,i] <- replace(scratch[,i], scratch[,i] == '11', "AA")
-  #   scratch[,i] <- replace(scratch[,i], scratch[,i] == '22', "BB")
-  #   scratch[,i] <- replace(scratch[,i], scratch[,i] == '12', "AB")
-  # }
-  # else{
-  #   scratch[,i] <- replace(scratch[,i], scratch[,i] == '11', "BB")
-  #   scratch[,i] <- replace(scratch[,i], scratch[,i] == '22', "AA")
-  #   scratch[,i] <- replace(scratch[,i], scratch[,i] == '12', "AB")
-  # }
-  # }
-# Make genotypes
-# package  
-    # library(genetics)
-# command
-    # scratch <- makeGenotypes(scratch, sep = '')
-# color pallet
-    #rgb.palette <- colorRampPalette(rev(c("blue","orange","red")),space = "rgb")
-# Linkage map
-    #My.map <- LDheatmap(scratch, LDmeasure = "r", distances = "genetic", title = "LD Heat Map", color = rgb.palette(18), flip=TRUE)
-  
-# Allele frequencies:
-#   Names of SNPs with 11 as the minor allele  
-    minor <- names(which(apply(geno.dat, 2, function(x) length(which(x == 11))) / nrow(geno.dat) <= 0.5))
-#   Total frequncies of alleles    
-    freqs <- apply(geno.dat, 2, function(x) length(which(x == 11))) / nrow(geno.dat) 
-#   Grab the minor alleles
-    freqs.plot <- freqs[minor]
-#   Sort them by AF
-    freqs <- sort(freqs.plot, decreasing = TRUE)
-#   Barplot
-    # barplot(height = freqs)
-
-####  
-# Fst over sliding latitudinal gradient
-  library(genetics)
-  library(hierfstat)
-# Import data:
-#   Fumi's cleaned Genotype data
-    # Fumi.Cleaned.Genotypes <- read.csv("~/Landrace_Analysis/Worked_Datasets/Fumi.Cleaned.Genotypes.csv")
-#   Re-location data
-    # loc.dat <- read.csv("~/Landrace_Analysis/Worked_Datasets/803_landraces_KML.csv")
 # Data frame with a sliding window of latitutde values
   Lats <- as.list(seq(from = min(range(loc.dat$Latitude, na.rm = TRUE)), 
                                 to = max(range(loc.dat$Latitude, na.rm = TRUE)),
