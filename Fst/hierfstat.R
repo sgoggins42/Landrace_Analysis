@@ -1,6 +1,7 @@
+# 1. Make data minor allele counts:
+
 # No factors please
 options(stringsAsFactors = FALSE)
-
 # Import dataset
 #   Genotype data
     geno.dat <- read.csv("~/Landrace_Analysis/Worked_Datasets/Fumi.Cleaned.Genotypes.csv")
@@ -49,68 +50,94 @@ options(stringsAsFactors = FALSE)
   geno.dat <- as.data.frame(cbind(major.dat, minor.dat))
 # Make data numeric:
   geno.dat <- as.data.frame(apply(geno.dat, 2, as.numeric))
-  
 # Plot the minor allele frequency:
-    h <- hist(colSums(geno.dat, na.rm = TRUE)/nrow(geno.dat),
+#   Major alleles only
+    Major.alleles <- apply(geno.dat, 2, function(x) length(which(x == 0)))    
+#   Minor alleles only  
+    Minor.alleles <- apply(geno.dat, 2, function(x) length(which(x == 1)))    
+#   Get frequencies
+    Allele.freqs <- (Minor.alleles) / (Major.alleles + Minor.alleles)    
+#   Plot
+    pdf(file = "~/Landrace_Analysis/MAF.pdf")
+    h <- hist(Allele.freqs,
               breaks = 40)
     h$density <- h$counts/sum(h$counts)    
     plot(h, freq = FALSE,
          main = "MAF",
          xlab = "MAF",
          ylab = "Density")    
-### What is going on here?
-
-
-####
+    dev.off()
+#2. Fst by Latitude analysis
+# Import location data:
+  loc.dat <- read.csv("~/Landrace_Analysis/Worked_Datasets/803_landraces_KML.csv")
 # Data frame with a sliding window of latitutde values
   Lats <- as.list(seq(from = min(range(loc.dat$Latitude, na.rm = TRUE)), 
                                 to = max(range(loc.dat$Latitude, na.rm = TRUE)),
                                 by = 5))
-# Function to get Fst: mean, overall (how are they different), latitude split, and top 1%SNPs:
+# Column name change for Samples
+  colnames(Samples.dat) <- "Accession.ID"
+# Add column to genotype matrix for merging later
+  geno.dat <- as.data.frame(cbind(Samples.dat,geno.dat))
+# Import package
+  library(hierfstat)
+# Function to get Fst: mean,, latitude split, and top 1% SNPs:
 to.Lats <- function(dat, Genos, this.lat) {  
-    # dat = loc.dat
-    # Genos = geno.dat
-    # this.lat = Lats
-    # Identify subpopulations based on latitude values above
-  dat$Lat <- ifelse(test = dat$Latitude > this.lat, yes = 1, no = 2)
-    # Making a temp df to store the names and the side column
-  tmp.df <- dat[,c("Accession.ID","Lat")]
-    # merging onto the genotypes 
-  grouped.genos.df <- merge(x = tmp.df, y= Genos, by.x = "Accession.ID", by.y = "taxa")
-  grouped.genos.df$Lat <- apply(X = grouped.genos.df, MARGIN = 1, FUN = as.integer)
-    # basic.stats, removing names from the calculations
-  These.Stats <- basic.stats(grouped.genos.df[, -1], diploid = FALSE)
-  These.F.Stats <- These.Stats$perloc
-    # Report mean and range of top 5%
-  This.mean <- data.frame(Mean = mean(These.F.Stats$Fst, na.rm = TRUE))
-  This.overall <- data.frame(Overall = These.Stats$overall)
-  This.Split <- data.frame(Lat = this.lat)
-  Vals <- cbind(This.mean, This.overall, This.Split)
-  # Graph
-    # Get top 5%
-  # Identify Fst Outliers by 95%
-  #Grab <- 0.01 * length(These.F.Stats$Fst)
-  #Sorted.Fst <- data.frame(sort(x = These.F.Stats$Fst, decreasing = TRUE))
-  #colnames(Sorted.Fst) <- "Fst"
-  #Top.Fst <- Sorted.Fst$Fst[Grab]
-    # Histogram
-  #hist(These.F.Stats$Fst,
-  #     main = this.lat,
-  #     xlab = "Fst",
-  #     xlim = c(-.2, 1),
-  #     breaks = 20,
-  #     col = "grey50")
-  #abline(v = Top.Fst, col = "red")
+  ## dat = loc.dat
+  ## Genos = geno.dat
+  ## this.lat = Lats
+  ####
+  #1. Perform Fst analysis:
+  #   Identify subpopulations based on latitude values above
+      dat$Lat <- ifelse(test = dat$Latitude > this.lat, yes = as.integer(1), no = as.integer(2))
+  #   Make a temp df to store the names and the side column
+      tmp.df <- dat[ ,c("Accession.ID","Lat")]
+  #   Change column names for merging
+      colnames(tmp.df) <- c("Accession.ID","Lat")
+  #   Merge onto the genotypes 
+      grouped.genos.df <- merge(x = tmp.df, y= Genos, by = "Accession.ID")
+  #   hiefstat: basic.stats, removing names from the calculations
+      These.Stats <- basic.stats(grouped.genos.df[, -1], diploid = FALSE)
+  #   Save Fstats from perloc
+      These.F.Stats <- These.Stats$perloc
+  ####
+  #2. Report mean and latiudinal split
+  #   Mean:
+      This.mean <- data.frame(Mean = mean(These.F.Stats$Fst, na.rm = TRUE))
+  #   Split:
+      This.Split <- data.frame(Lat = this.lat)
+  #   Vals:
+      Vals <- cbind(This.mean, This.Split)
+  ####
+  # 3. Graph the Fst distribution
+  #   Means to add to graph
+      graph.means <- as.list(This.mean$Mean)
+  #   Histogram
+      hist(These.F.Stats$Fst,
+        main = "Distribution of Fst",
+        xlab = "Fst",
+        xlim = c(-.2, 1),
+        breaks = 20,
+        col = "grey50")
+  #   Add means
+      abline(v = graph.means, col = "red")
+  #   Add legend
+      legend("topright", legend = c("Latitude: ", this.lat, "Mean Fst:", graph.means),
+             col = c(NA,NA,NA,"red"), lty = c(NA,NA,NA,1))
+  ####
+  # 4. Get top 1% SNPs per latitude group
+      #Top.F <- data.frame(Fst = These.F.Stats$Fst, Accession.ID = SNPs.dat$SNPs.dat)
+      #N <- length(this.lat)
+      #vectorOfTables <- vector(mode = "list", length = N)
+      #vectorOfTables[[this.lat]] <- Top.F[with(Top.F, order(Fst, na.last = TRUE, decreasing = TRUE)),]
   # Return stats
-    return(Stats = Vals)
-} 
+      return(Stats = Vals)
+  } 
 
-geno.dat <- Fumi.Cleaned.Genotypes
-
-# Print graphs and stats
-  # pdf(file = "Latitude Graphs")
+# Run function and print graphs to output
+  #pdf(file = "~/Landrace_Analysis/Latitude_Graphs.pdf")
   Fst.by.Lat <- sapply(X = Lats, FUN = to.Lats, dat = loc.dat, Genos = geno.dat)
-  # dev.off()
+  #dev.off()
+  
   Fst.by.Lat
 
   # Get top Fst vals
