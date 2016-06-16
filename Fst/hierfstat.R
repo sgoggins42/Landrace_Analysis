@@ -148,42 +148,85 @@ to.Lats <- function(dat, Genos, this.lat) {
 
   #### E or W 
   # West is 1, East is 2
-  loc.df$side <- ifelse(test = loc.df$Longitude <48, yes = "1", no = "2")
+  loc.dat$side <- ifelse(test = loc.dat$Longitude <48, yes = "1", no = "2")
   # making a temp df to store the names and the side column
-  locside.df <- loc.df[,c("Accession.ID","side")]
+  locside.df <- loc.dat[,c("Accession.ID","side")]
   # merging onto the genotypes 
-  locgenoEW.df <- merge(x = locside.df, y=geno.df, by.x = "Accession.ID", by.y = "X")
+  locgenoEW.df <- merge(x = locside.df, y=geno.dat, by = "Accession.ID")
   #basic.stats
   EW_basicstats <- basic.stats(locgenoEW.df[, -1], diploid = FALSE)
-  write.csv(EW_basicstats$perloc,file="EW_basicstats.csv")
+  EW_perloc <- EW_basicstats$perloc
+  # Merge Fst with genetic map info
+  #   Get SNP names from rownames to column
+  EW_names <- as.data.frame(rownames(EW_perloc))
+  colnames(EW_names) <- "SNPs"
+  #   combine SNP names and FST
+  EW_perloc <- as.data.frame(cbind(EW_names, EW_perloc$Fst))
+  colnames(EW_perloc)[2] <- "Fst"
+  #   Select map locations data
+  Map.Locations <- GeneticMap_iSelect_9k[,c("SNP","Chro","cm")]
+  #   Finally merge
+  Map.Locations <- merge(x = EW_perloc, y = Map.Locations, by.x = "SNPs", by.y = "SNP")
+  # Make chromosomes actually numeric:
+  to.Chrom <- function(dat){
+    dat[dat == "1H"] <- as.numeric(1)
+    dat[dat == "2H"] <- as.numeric(2)
+    dat[dat == "3H"] <- as.numeric(3)
+    dat[dat == "4H"] <- as.numeric(4)
+    dat[dat == "5H"] <- as.numeric(5)
+    dat[dat == "6H"] <- as.numeric(6)
+    dat[dat == "7H"] <- as.numeric(7)
+    return(dat)
+  }
+  #  Run function
+  Map.Locations <- to.Chrom(dat = Map.Locations)   
   #graph outlier SNPs
-  
-  #### Making a column for 2 v 6 row barley
-  #Rowtype.df <- barley_compare_merged[,c(2,11)]
-  #Rowtype2.df <- subset(Rowtype.df, 
-  #                      SPIKEROW == 2, 
-  #                      select = c(Accession.ID, SPIKEROW))
-  #Rowtype6.df <- subset(Rowtype.df, 
-  #                        SPIKEROW == 6, 
-  #                        select = c(Accession.ID, SPIKEROW))
-  #RowtypeC.df <- rbind(Rowtype2.df,Rowtype6.df)
-  #locRowtype.df <- merge(x = RowtypeC.df, y = geno.df, 
-  #                       by.x = "Accession.ID", by.y = "X")
-  #locRowtype.df$Accession.ID <- 1:nrow(locRowtype.df)
-  # 2:2; 6:1; other:NA
-  #locRowtype.df$SPIKEROW <- ifelse(test = locRowtype.df$SPIKEROW == "2", yes="2", no ="1" )
-  #row_basicstats <- basic.stats(locRowtype.df[, -1], diploid = FALSE)
-  #row_basicstats #FST: 0.0766
-  
-  #### Making a column for spring vs winter
-  #SpringLR <- subset(mergedAccessions, HABIT == "S", select = c(Accession.ID,HABIT))
-  #WinterLR <- subset(mergedAccessions, HABIT == "W", select = c(Accession.ID,HABIT))
-  #HabitC.df <- rbind(SpringLR,WinterLR)
-  #locHabit.df <- merge(x = HabitC.df, y=geno.df, by.x = "Accession.ID", by.y = "X")
-  #locHabit.df$Accession.ID <- 1:nrow(locHabit.df)
-  # Winter:1, Spring:2
-  #locHabit.df$HABIT <- ifelse(test = locHabit.df$HABIT == "W", yes="1", no="2")
-  #SpWi_basicstats <- basic.stats(locHabit.df[, -1], diploid = FALSE)
-  #SpWi_basicstats #FST = 0.0231
+  library(qqman)
+  # Change to fit manhattan
+  #   Real columns: SNP, Chro, cm, Fst
+  Map.Locations <- Map.Locations[,c(1,3,4,2)]
+  colnames(Map.Locations) <- c("SNP","CHR","BP","P")
+  Map.Locations$CHR <- as.numeric(Map.Locations$CHR)
   
 
+  snpsOfInterest.2 <- subset(x = Map.Locations, subset = BP >= 67.1 & BP <= 68.1, select = c(SNP, CHR))
+  snpsOfInterest.2 <- subset(x = snpsOfInterest.2, subset = CHR == 2, select = SNP)
+  
+  snpsOfInterest.3 <- subset(x = Map.Locations, subset = BP >= 65.3 & BP <= 67.9, select = c(SNP, CHR))
+  snpsOfInterest.3 <- subset(x = snpsOfInterest.3, subset = CHR == 3, select = SNP)
+  
+  snpsOfInterest.4 <- subset(x = Map.Locations, subset =BP >= 56.1 & BP <= 56.3, select = c(SNP, CHR))
+  snpsOfInterest.4 <- subset(x = snpsOfInterest.4, subset = CHR == 4, select = SNP)
+  
+  snpsOfInterest.5 <- subset(x = Map.Locations, subset = BP >= 42.2 & BP <= 42.5, select = c(SNP, CHR))
+  snpsOfInterest.5 <- subset(x = snpsOfInterest.5, subset = CHR == 5, select = SNP)
+  
+  snpsOfInterest.6 <- subset(x = Map.Locations, subset = BP >= 59.3 & BP <= 60.6, select = c(SNP, CHR))
+  snpsOfInterest.6 <- subset(x = snpsOfInterest.6, subset = CHR == 6, select = SNP)
+  
+  snpsOfInterest.7 <- subset(x = Map.Locations, subset = BP >= 80.3 & BP <= 81.8, select = c(SNP, CHR))
+  snpsOfInterest.7 <- subset(x = snpsOfInterest.7, subset = CHR == 7, select = SNP)
+  
+  snpsOfInterest <- rbind(snpsOfInterest.2, snpsOfInterest.3, snpsOfInterest.4, snpsOfInterest.5,
+                          snpsOfInterest.6, snpsOfInterest.7)
+  
+  snpsOfInterest <- as.array(snpsOfInterest$SNP)
+  
+  png(
+    "/Users/dgrossen/Landrace_Analysis/Fst/Fst.by.Lat.png",
+    width     = 3,
+    height    = 2,
+    units     = "in",
+    res       = 1200,
+    pointsize = 4
+  )
+  
+   manhattan(x = Map.Locations, logp = FALSE,
+                ylab = "FST",
+                main = "FST by Latitude",
+                highlight = snpsOfInterest)
+  
+   dev.off()
+  
+  
+  
