@@ -72,7 +72,9 @@ png(
 manhattan(x = Map.dat, logp = FALSE,
           ylab = "SPA",
           main = "Spatial Ancestry Analysis",
-          highlight = snpsOfInterest)
+          highlight = snpsOfInterest,
+          suggestiveline = F,
+          genomewideline = F)
 
 dev.off()
 

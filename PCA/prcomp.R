@@ -48,4 +48,21 @@ var_cor_func <- function(var.loadings, comp.sdev){
   # Bio6: 'Min Temperature of Coldest Month'
   # Bio11: 'Mean Temperature of Coldest Quarter'
   # Bio12: 'Annual Precipitation'
+
+
+# princomp 3D graph: shows no trends
+  pc <- princomp(Bioclim[,-1], cor=TRUE, scores=TRUE)
+  plot3d(pc$scores[,1:3], col = c("red","blue","black"))
+
+# Graph of GWAS results:
+  GWAS.dat <- Bioclim[,c("Taxa","bio19")]
+  GWAS.to.merge <- geno.dat
+  GWAS.dat <- merge(x = GWAS.dat, y = GWAS.to.merge, by.x = "Taxa", by.y = "Accession.ID")
+  t.test(GWAS.dat$bio19~GWAS.dat$SCRI_RS_219749)
+  
+  to.T.dist <- function(x){
+    t.dat <- as.data.frame(t.test(GWAS.dat$bio19~x)$statistic))
+    t.dat <- data.frame(t = t.dat$)
+  }
+  
   
