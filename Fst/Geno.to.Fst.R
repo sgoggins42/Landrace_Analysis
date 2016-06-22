@@ -132,6 +132,9 @@ options(stringsAsFactors = FALSE)
     # making a temp df to store the names and the side column
     locside.df <- loc.dat[,c("Accession.ID","side")]
     # merging onto the genotypes 
+    geno.dat <- as.data.frame(cbind(Samples.dat, geno.dat))
+    colnames(geno.dat)[1] <- "Accession.ID"
+    # merge
     locgenoEW.df <- merge(x = locside.df, y=geno.dat, by = "Accession.ID")
     #basic.stats
     EW_basicstats <- basic.stats(locgenoEW.df[, -1], diploid = FALSE)
