@@ -2,7 +2,7 @@
 options(stringsAsFactors = FALSE)
 
 # Transform data by running hierfstat.R script
-# source(hierfstat.R)
+# source(Geno.to.Fst.R)
 #   geno.dat: transformed for minor allele count
 #   Samples.dat: SNP names from geno.dat
 #   EW_perloc: output from hierfstat
